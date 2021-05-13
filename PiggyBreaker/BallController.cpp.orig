@@ -1,0 +1,210 @@
+#include "BallController.h"
+#include "Globals.h"
+#include <SDL_image.h>
+#include "CollisionSystem.h"
+
+vector<Ball*>* BallController::m_ballsVector = new vector<Ball*>();
+vector<SDL_Texture*> BallController::m_vectorTextures;
+string BallController::m_textureNames[7] = { "bubbles_red.png", "bubbles_green.png", "bubbles_blue.png", "bubbles_yellow.png", "bubbles_orange.png", "bubbles_purple.png", "bubbles_cyan.png" };
+double BallController::m_minPosX = CANVAS_MIN.x;
+double BallController::m_maxPosX = CANVAS_MAX.x;
+double BallController::m_currentPosX = m_minPosX;
+double BallController::m_currentPosY = CANVAS_MIN.y;
+bool BallController::m_stop = false;
+Ball* BallController::m_MovingBall = nullptr;
+
+vector<SDL_Texture*> BallController::getVectorTextures()
+{
+	return m_vectorTextures;
+}
+
+void BallController::generateBalls(SDL_Renderer* renderer, int shape)
+{
+	int randomShape = shape;
+
+	switch (randomShape) {
+	case 1:
+		//Screen fill
+		m_minPosX = CANVAS_MIN.x;
+		m_currentPosX = m_minPosX;
+		break;
+	case 2:
+		//"Inverted" Triangle
+		m_minPosX = CANVAS_MIN.x * 2;
+		m_maxPosX = CANVAS_MAX.x / 1.26;
+		m_currentPosX = m_minPosX;
+		break;
+	case 3:
+		// "Perfect" Triangle
+		m_minPosX = CANVAS_MAX.x / 1.75;
+		m_maxPosX = m_minPosX;
+		m_currentPosX = m_minPosX;
+		break;
+	default:
+		break;
+	}
+
+	while (!m_stop) {
+		Ball* ball = new Ball();
+		//Generate a number between 0 and 6 (This will decide of the ball color according to the enum
+		int colorIndex = rand() % BallColor::NbColors;
+
+		ball->setPosX(m_currentPosX);
+		ball->setPosY(m_currentPosY);
+		//Sets the color by casting int to Color
+		ball->setColor((BallColor::ballColors)colorIndex);
+		//Sets the texture color
+		ball->setTexture(m_vectorTextures[colorIndex]);
+		ball->setScoreValue(10);
+		ball->setIsSpecial(false);
+		m_ballsVector->push_back(ball);
+
+		m_currentPosX += (ball->getRadius() * 2);
+
+		if (m_currentPosX >= m_maxPosX) {
+			m_currentPosX = m_minPosX - ball->getRadius();
+			m_currentPosY += (ball->getRadius() * 2);
+			m_maxPosX += ball->getRadius() * 1.2;
+			m_minPosX -= ball->getRadius();
+		}
+
+		switch (randomShape) {
+		case 1:
+			//This fills entire screen with ball lines
+			if (m_currentPosX >= CANVAS_MAX.x) {
+				if (m_minPosX == CANVAS_MIN.x) {
+					m_minPosX = CANVAS_MIN.x - 16;
+				}
+				else {
+					m_minPosX = CANVAS_MIN.x;
+				}
+				m_currentPosX = m_minPosX;
+				m_currentPosY += (ball->getRadius() * 2);
+			}
+			break;
+		case 2:
+			//"Inverted" Triangle
+			if (m_currentPosX >= m_maxPosX) {
+				m_currentPosX = m_minPosX + ball->getRadius();
+				m_maxPosX -= ball->getRadius();
+			}
+			break;
+		case 3:
+			//"Perfect" Triangle
+			if (m_currentPosX >= m_maxPosX) {
+				m_currentPosX = m_minPosX - ball->getRadius();
+			}
+			break;
+		default:
+			break;
+		}
+
+		if (m_currentPosY >= CANVAS_MAX.y) {
+			m_stop = true;
+		}
+		//m_stop = true;
+	}
+}
+
+vector<Ball*>* BallController::getVectorBalls()
+{
+	return m_ballsVector;
+}
+
+string BallController::getTextureName(int textureName)
+{
+	return m_textureNames[textureName];
+}
+
+void BallController::setVectorBalls(SDL_Texture* textureToAdd)
+{
+	m_vectorTextures.push_back(textureToAdd);
+}
+
+SDL_Texture* BallController::getTexture(int i)
+{
+	return m_vectorTextures[i];
+}
+
+void BallController::resetCanvas()
+{
+	m_ballsVector->clear();
+	m_currentPosX = CANVAS_MIN.x;
+	m_currentPosY = CANVAS_MIN.y;
+	m_minPosX = 16;
+	m_maxPosX = CANVAS_MAX.x;
+	m_stop = false;
+}
+
+void BallController::setMovingBall(Ball* pBall)
+{
+	m_MovingBall = pBall;
+}
+
+double BallController::DegToRad(double angle) {
+	return angle * (M_PI / 180);
+}
+
+void BallController::drawMovingBall(SDL_Renderer* rnd) {
+
+	if (m_MovingBall != NULL) {
+
+		double oldPosX = m_MovingBall->getPosX();
+		double oldPosY = m_MovingBall->getPosY();
+
+		double rAngle = DegToRad(m_MovingBall->getAngle() - 90);
+		m_MovingBall->setPosX(m_MovingBall->getPosX() + m_Speed * cos(rAngle));
+		m_MovingBall->setPosY(m_MovingBall->getPosY() + m_Speed * sin(rAngle));
+<<<<<<< HEAD
+		
+		SDL_Rect rectBall = { m_MovingBall->getPosX() - 16, m_MovingBall->getPosY() - 16, 32, 32 };
+=======
+
+		SDL_Rect rectBall = { m_MovingBall->getPosX(), m_MovingBall->getPosY(), 32, 32 };
+>>>>>>> caa377027ca7a1a849efa02fdf247eb7a60d768b
+		SDL_RenderCopy(rnd, m_MovingBall->getTexture(), NULL, &rectBall);
+
+
+		if (m_MovingBall->getPosX() <= CANVAS_MIN.x) {
+			m_MovingBall->setAngle(-m_MovingBall->getAngle());
+			m_MovingBall->setPosX(CANVAS_MIN.x);
+		}
+		else if (m_MovingBall->getPosX() >= CANVAS_MAX.x) {
+			m_MovingBall->setAngle(-m_MovingBall->getAngle());
+			m_MovingBall->setPosX(CANVAS_MAX.x);
+		}
+
+<<<<<<< HEAD
+		
+
+=======
+>>>>>>> caa377027ca7a1a849efa02fdf247eb7a60d768b
+
+		for (size_t i = 0; i < m_ballsVector->size(); i++) {
+			if (CollisionSystem::isTouching(m_MovingBall, m_ballsVector->at(i))) {
+				m_MovingBall->setPosX(oldPosX);
+				m_MovingBall->setPosY(oldPosY);
+				
+				CollisionSystem::snapTo(m_MovingBall, m_ballsVector->at(i));
+				m_MovingBall = nullptr;
+				break;
+			}
+		}
+
+<<<<<<< HEAD
+		
+
+		std::cout << m_ballsVector->size() << std::endl;
+=======
+>>>>>>> caa377027ca7a1a849efa02fdf247eb7a60d768b
+		//if (m_MovingBall->getPosY() <= CANVAS_MIN.y) {
+		//	delete m_MovingBall;
+		//	m_MovingBall = nullptr;
+		//}
+	}
+}
+
+bool BallController::isBallInPlay()
+{
+	if (m_MovingBall == NULL) { return false; } return true;
+}

@@ -1,0 +1,103 @@
+#include "Cannon.h"
+#include "SDL.h"
+#include "Globals.h"
+#include "BallColor.h"
+
+#include <iostream>
+#include <time.h>
+
+using namespace std;
+
+Cannon::Cannon()
+{
+	m_Ball = NULL;
+	m_BallController = NULL;
+	m_texture = NULL;
+	m_cannonPos = Vector(APP_WIDTH / 2, 660);
+}
+
+Cannon::~Cannon() {
+	for (auto& it : m_BallQueue)
+		delete it;
+
+	m_BallQueue.clear();
+}
+
+void Cannon::setBallControler(BallController* ballControler)
+{
+	m_BallController = ballControler;
+
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		addRandomBall();
+	}
+
+	getNextBall();
+}
+
+void Cannon::setTexture(SDL_Texture* texture)
+{
+	m_texture = texture;
+}
+
+void Cannon::draw(SDL_Renderer* rnd)
+{
+	//SDL_RenderDrawLine(rnd, PLAY_AREA_MIN.x, PLAY_AREA_MAX.y, PLAY_AREA_MAX.x , PLAY_AREA_MAX.y);
+	SDL_RenderCopyEx(rnd, m_texture, NULL, &m_Cannon, getAngleDeg(), NULL, SDL_FLIP_NONE);
+	SDL_RenderCopy(rnd, m_Ball->getTexture(), NULL, &m_FireBall);
+	SDL_RenderCopy(rnd, m_BallQueue.front()->getTexture(), NULL, &m_BallQueue1);
+	SDL_RenderCopy(rnd, m_BallQueue.back()->getTexture(), NULL, &m_BallQueue2);
+}
+
+void Cannon::addRandomBall()
+{
+	Ball* ball = new Ball();
+
+	int r = rand() % sizeof(BallColor::ballColors);
+	ball->setColor((BallColor::ballColors)r);
+	ball->setPosX(m_Cannon.x);
+	ball->setPosY(m_Cannon.y);
+<<<<<<< HEAD
+	ball->setTexture(m_ballController->getTexture(r));
+	
+=======
+	ball->setTexture(m_BallController->getTexture(r));
+
+>>>>>>> a96c6734dc3a5887b469c821e711f7de634a6adb
+	m_BallQueue.push_back(ball);
+}
+
+void Cannon::getNextBall()
+{
+	//m_Ball = nullptr;
+	delete m_Ball;
+	m_Ball = m_BallQueue.front();
+	m_BallQueue.pop_front();
+	addRandomBall();
+}
+
+void Cannon::setMousePos(Vector mouse)
+{
+	m_mousePos = mouse;
+}
+
+double Cannon::getAngleDeg()
+{
+	double angle = -90 + (atan2(m_cannonPos.y - m_mousePos.y, m_cannonPos.x - m_mousePos.x) * 180.00) / M_PI;
+	
+	if (angle < MIN_DEG)
+		angle = MIN_DEG;
+	if (angle > MAX_DEG)
+		angle = MAX_DEG;
+
+	return angle;
+}
+
+void Cannon::shoot()
+{
+	if (m_mousePos.x > PLAY_AREA_MIN.x && m_mousePos.x < PLAY_AREA_MAX.x &&
+		m_mousePos.y > PLAY_AREA_MIN.y && m_mousePos.y < PLAY_AREA_MAX.y) {
+		//m_BallControler->shoot(&m_Ball);
+		getNextBall();
+	}
+}
+

@@ -1,0 +1,344 @@
+#include "Game.h"
+#include <sstream>
+#include <vector>
+#include "Ball.h"
+#include "Cannon.h"
+#include "BallController.h"
+#include "CollisionSystem.h"
+
+//Various textures and items
+SDL_Texture* backgroundTexture;
+SDL_Texture* menuTexture;
+SDL_Texture* image;
+SDL_Texture* mouse_pos_font;
+SDL_Texture* highScoreText;
+SDL_Color color;
+SDL_Event e;
+Mix_Music* music = NULL;
+string fontName = "Chilanka-Regular.ttf";
+
+//Game Members
+Game game;
+Vector mouse;
+BallController ballController;
+Cannon cannon = Cannon(game.get_Directory());
+int FPS = 60;
+
+//Buttons and their textures
+SDL_Rect rectNewGame = { 0,0,0,0 };
+SDL_Rect rectResume = { 0,0,0,0 };
+SDL_Rect rectPlay = { 0,0,0,0 };
+SDL_Rect rectQuit = { 0,0,0,0 };
+SDL_Rect rectSoundControl = { 0,0,0,0 };
+SDL_Texture* buttonNewGame;
+SDL_Texture* buttonResume;
+SDL_Texture* buttonQuit;
+SDL_Texture* speakerOn;
+
+//HighScores Handling and Rendering
+int highScore;
+std::stringstream highScoreStream;
+
+//Loops
+bool inMainMenu = true;
+bool isRunning = false;
+bool isPaused = false;
+bool musicPaused = false;
+void menu_loop(SDL_Renderer*);
+void game_loop(SDL_Renderer*);
+void paint_loop(SDL_Renderer*);
+void event_loop();
+
+//*NOTE*
+//To get access to the console, make sure you run the program in Debug instead of release, when doing so
+//a command prompt will pop up along with the SDL window.
+int main(int argc, char** argv) {
+
+	srand((int)time(NULL));
+
+	//To load an image you first declare the texture with:
+	//SDL_Texture *texture_name, as seen above the int main function.
+	//Then you call the load_Texture function with the relative image
+	//path, and a reference to the renderer.
+<<<<<<< HEAD
+	speakerOn = game.load_Texture(game.get_Directory() + "images/speaker.png", game.ren);
+=======
+	backgroundTexture = game.load_Texture(game.get_Directory() + "images/game_background_texture.png", game.ren);
+>>>>>>> 41caba0128ec7aee359caa712e7db0712e7a4cf3
+	menuTexture = game.load_Texture(game.get_Directory() + "images/menu_texture.png", game.ren);
+	buttonNewGame = game.load_Texture(game.get_Directory() + "images/new_game_button.png", game.ren);
+	buttonResume = game.load_Texture(game.get_Directory() + "images/button_resume.png", game.ren);
+	buttonQuit = game.load_Texture(game.get_Directory() + "images/quit_button.png", game.ren);
+
+	//This loop loads every ball textures in a vector<SDL_Textures> in the BallController
+	for (int i = 0; i < 7; i++)
+	{
+		SDL_Texture* texture = game.load_Texture(game.get_Directory() + "images/" + BallController::getTextureName(i), game.ren);
+		BallController::setVectorBalls(texture);
+	}
+
+	// Load and Set Cannon texture
+	cannon.setTexture(game.load_Texture(game.get_Directory() + "images\\cannon.png", game.ren));
+	cannon.setBallControler(&ballController);
+
+	//Music loading
+	if (!musicPaused) {
+		Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 2048);
+		music = Mix_LoadMUS("../Debug/sounds/test.wav");
+		Mix_PlayMusic(music, 1);
+	}
+
+	//Read HighScores file and fill the array
+	highScore = Game::readHighScore();
+	highScoreStream << highScore;
+
+	//We set a color here for use in creating font textures such as in the mouse move
+	//event where we create a text image of the current mouse X and Y.
+	color = { 255, 255, 255, 125 };
+
+	//After all of the basic setup, the game_loop is called with a
+	//reference to the renderer. This is where all of the magic happens
+	//and as so is located directly below.
+	menu_loop(game.ren);
+
+	return 0;
+}
+
+void menu_loop(SDL_Renderer* ren) {
+
+	rectNewGame = { 420,485,200,75 };
+	rectQuit = { 420,575,200,75 };
+	rectSoundControl = { 950,690,50,50 };
+
+	while (inMainMenu) {
+		event_loop();
+
+		SDL_RenderClear(ren);
+
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+		SDL_SetTextureBlendMode(menuTexture, SDL_BLENDMODE_NONE);
+		SDL_SetTextureAlphaMod(menuTexture, 255);
+
+		game.render_Texture(menuTexture, ren, 0, 0);
+		game.render_Texture(buttonNewGame, ren, 420, 485);
+		game.render_Texture(buttonQuit, ren, 420, 575);
+		game.render_Texture(speakerOn, ren, 950, 690);
+
+		SDL_RenderDrawRect(ren, &rectSoundControl);
+
+		SDL_RenderPresent(ren);
+
+		SDL_Delay((1000 / FPS));
+	}
+}
+
+//This is the main game_loop of the program. Once this loop is called it
+//will run until running is set to false. This loop first calls the event_loop
+//to process any events in the queue. Then it clears the screen and calls the
+//paint_loop. Inside the paint loop function is where you would render textures.
+//It then presents the renders to the screen and sleeps for 1000 / FPS ms. This 
+//prevents the game_loop from running 1000s of time per second and putting an
+//unessisary load on the CPU and GPU
+void game_loop(SDL_Renderer* ren) {
+	rectResume = { 420,395,200,75 };
+	rectPlay = { 810,720,70,25 };
+
+	int shape = rand() % 3 + 1;
+
+	std::cout << shape << endl;
+
+	BallController::generateBalls(ren, shape);
+
+	while (isRunning) {
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+		SDL_SetTextureBlendMode(backgroundTexture, SDL_BLENDMODE_NONE);
+		SDL_SetTextureAlphaMod(backgroundTexture, 255);
+
+		event_loop();
+
+		//The area below the event_loop being called, and above the SDL_RenderClear function being called
+		//is where you would typically put any code that needs to be run every frame of the game.
+		//Things such as updating the player position if a key is being held down, or moving an enemy
+		//across the screen.
+
+		// shoot()
+		// rebound()
+		// findCluster()
+		// remove
+		// add() --> to the score
+		// findFloatingCluster() --> if return == size() > 0
+		// isFalling
+		// add gravity to the balls
+
+		SDL_RenderClear(ren);
+	
+		if (!isPaused) {
+			paint_loop(ren);
+			SDL_Delay((1000 / FPS));
+		}
+		else {
+			SDL_SetTextureBlendMode(backgroundTexture, SDL_BLENDMODE_BLEND);
+			SDL_SetTextureAlphaMod(backgroundTexture, 125);
+			game.render_Texture(backgroundTexture, ren, 0, 0);
+
+			game.render_Texture(buttonResume, ren, 420, 395);
+			game.render_Texture(buttonNewGame, ren, 420, 485);
+			game.render_Texture(buttonQuit, ren, 420, 575);
+			game.render_Texture(speakerOn, ren, 950, 690);
+
+			SDL_RenderDrawRect(ren, &rectSoundControl);
+		}
+		SDL_RenderPresent(ren);
+	}
+
+}
+
+//The paint_loop is resonsible for painting to the renderer every frame. This is
+//where you would paint your player or enemies textures, or the map tiles using
+//the render_Texture function to set the location and optionally the size of the image.
+void paint_loop(SDL_Renderer* ren) {
+
+	//Render the background texture
+	game.render_Texture(backgroundTexture, ren, 0, 0);
+
+	//Handles the Cannon angle and Draw
+	cannon.draw(ren);
+
+	//Draw each ball of the vector<Ball> and apply the proper texture color to each ball
+	for (size_t i = 0; i < BallController::getVectorBalls().size(); i++)
+	{
+		//Draw the ball
+		//ballController.getVectorBalls()[i].drawBall(ren, true);
+		//Render the ball texture
+		game.render_Texture(BallController::getVectorBalls()[i].getTexture(), ren, (size_t)BallController::getVectorBalls()[i].getPosX(), (size_t)BallController::getVectorBalls()[i].getPosY());
+	}
+
+	SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+	SDL_RenderDrawRect(ren, &rectSoundControl);
+	game.render_Texture(speakerOn, ren, 950, 690);
+
+	highScoreText = game.render_Text(highScoreStream.str(), game.get_Directory() + fontName, color, 30, ren);
+	game.render_Texture(highScoreText, ren, 810, 670);
+
+	SDL_DestroyTexture(highScoreText);
+}
+
+//The event loop. This will check the queue of events every time
+//it is called from the game loop and will process events with 
+//the SDL Event object e.
+void event_loop() {
+	while (SDL_PollEvent(&e)) {
+		if (e.type == SDL_QUIT) {
+			inMainMenu = false;
+			isPaused = false;
+			isRunning = false;
+
+		}
+		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+			if (inMainMenu) {
+				inMainMenu = false;
+			}
+			else if (isRunning) {
+				if (!isPaused) {
+					isPaused = true;
+				}
+				else {
+					isPaused = false;
+				}
+			}
+		}
+		//Shows the basic use of an event to report information to the screen.
+		//In this case whenever the mouse moves we take its X and Y location,
+		//render it into a text, and then it gets rendered to the screen during
+		//the next paint loop!
+		if (!isPaused) {
+			if (e.type == SDL_MOUSEMOTION) {
+				//std::stringstream info;
+				//info << "Mouse X: " << e.motion.x << "   Y: " << e.motion.y;
+				//mouse_pos_font = game.render_Text(info.str(), game.get_Directory() + "Chilanka-Regular.ttf", color, 16, game.ren);
+
+				int x, y;
+				SDL_GetMouseState(&x, &y);
+				cannon.setMousePos(Vector(x, y));
+			}
+		}
+		if (e.motion.x >= rectSoundControl.x && e.motion.x <= rectSoundControl.x + rectSoundControl.w && e.motion.y >= rectSoundControl.y && e.motion.y <= rectSoundControl.y + rectSoundControl.h) {
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (e.button.button == SDL_BUTTON_LEFT)
+				{
+					if (!musicPaused) {
+						Mix_PauseMusic();
+						musicPaused = true;
+					}
+					else {
+						Mix_ResumeMusic();
+						musicPaused = false;
+					}
+				}
+			}
+		}
+		if (e.motion.x >= rectNewGame.x && e.motion.x <= rectNewGame.x + rectNewGame.w && e.motion.y >= rectNewGame.y && e.motion.y <= rectNewGame.y + rectNewGame.h) {
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (e.button.button == SDL_BUTTON_LEFT)
+				{
+					if (inMainMenu) {
+						inMainMenu = false;
+						isRunning = true;
+						BallController::resetCanvas();
+						game_loop(game.ren);
+					}
+					else if (isPaused) {
+						isPaused = false;
+						BallController::resetCanvas();
+						game_loop(game.ren);
+					}
+
+				}
+			}
+		}
+		if (isPaused) {
+			if (e.motion.x >= rectResume.x && e.motion.x <= rectResume.x + rectResume.w && e.motion.y >= rectResume.y && e.motion.y <= rectResume.y + rectResume.h) {
+				if (e.type == SDL_MOUSEBUTTONDOWN)
+				{
+					if (e.button.button == SDL_BUTTON_LEFT)
+					{
+						isPaused = false;
+					}
+				}
+			}
+		}
+
+		if (inMainMenu || isPaused) {
+			if (e.motion.x >= rectQuit.x && e.motion.x <= rectQuit.x + rectQuit.w && e.motion.y >= rectQuit.y && e.motion.y <= rectQuit.y + rectQuit.h) {
+				if (e.type == SDL_MOUSEBUTTONDOWN)
+				{
+					if (e.button.button == SDL_BUTTON_LEFT)
+					{
+						isRunning = false;
+						isPaused = false;
+						inMainMenu = false;
+					}
+				}
+			}
+		}
+		if (!isPaused) {
+			if (e.type == SDL_MOUSEBUTTONDOWN) {
+				if (e.button.button == SDL_BUTTON_LEFT) {
+					cannon.shoot();
+				}
+			}
+			if (e.motion.x >= rectPlay.x && e.motion.x <= rectPlay.x + rectPlay.w && e.motion.y >= rectPlay.y && e.motion.y <= rectPlay.y + rectPlay.h) {
+				if (e.type == SDL_MOUSEBUTTONDOWN)
+				{
+					if (e.button.button == SDL_BUTTON_LEFT)
+					{
+						BallController::resetCanvas();
+						game_loop(game.ren);
+					}
+				}
+			}
+		}
+	}
+}

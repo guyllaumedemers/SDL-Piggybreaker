@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Ball.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Ball.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+<<<<<<< HEAD
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{bd45dad5-b214-4f8f-b0ff-c2f28dbf19e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{07b6f28c-844d-47aa-a20a-98137d631a8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{dac443c7-6efe-470f-9a11-605104b46882}</UniqueIdentifier>
+=======
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{497e066f-0590-45c7-b58f-195b24bda59c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{795af700-e78a-4a27-930e-663202d56cc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{804da535-1157-40e9-9360-5c0171c55397}</UniqueIdentifier>
+>>>>>>> 80c637a11f071ce719a3ec8f796d3bbb1a41604e
+    </Filter>
+  </ItemGroup>
+</Project>

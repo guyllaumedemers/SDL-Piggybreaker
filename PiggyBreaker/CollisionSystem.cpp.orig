@@ -1,0 +1,147 @@
+#include "CollisionSystem.h"
+
+Ball* CollisionSystem::m_Ball;
+std::vector<Ball*>* CollisionSystem::m_ballsVector = BallController::getVectorBalls();
+
+bool CollisionSystem::isTouching(Ball* ball1, Ball* ball2)
+{
+	bool retour = false;
+	double posX, posY;
+	posX = ball1->getPosX() - ball2->getPosX();
+	posY = ball1->getPosY() - ball2->getPosY();
+	posX = pow(posX, 2);
+	posY = pow(posY, 2);
+	if ((posX + posY) <= pow(ball1->getRadius() * 2, 2)) {
+		retour = true;
+	}
+	return retour;
+}
+
+void CollisionSystem::snapTo(Ball* m_ball, Ball* m_ball2)
+{
+	/*if (BallController::DegToRad(m_ball->getAngle()) < M_PI / 2) {
+		m_ball->setPosX(m_ball2->getPosX() + (m_ball->getRadius()));
+		m_ball->setPosY(m_ball2->getPosY() + (2 * m_ball2->getRadius()));
+	}
+	else if (BallController::DegToRad(m_ball->getAngle()) > M_PI / 2) {
+		m_ball->setPosX(m_ball2->getPosX() + (m_ball2->getRadius()));
+		m_ball->setPosY(m_ball2->getPosY() + (2 * m_ball2->getRadius()));
+	}
+	else {
+		m_ball->setPosX(m_ball2->getPosX());
+		m_ball->setPosY(m_ball2->getPosY() + (2 * m_ball2->getRadius()));
+<<<<<<< HEAD
+	}*/
+	m_ball2->setTexture(BallController::getVectorTextures()[1]);
+	std::cout << "x : " << m_ball->getPosX() << std::endl;
+	std::cout << "y : " << m_ball->getPosY() << std::endl;
+=======
+	}
+
+>>>>>>> caa377027ca7a1a849efa02fdf247eb7a60d768b
+	BallController::getVectorBalls()->push_back(m_ball);
+}
+
+bool CollisionSystem::isColor(Ball* ball1, Ball* ball2)
+{
+	bool retour = false;
+	double deltaRed, deltaGreen, deltaBlue, distance;
+	deltaRed = ball1->getColor().r - ball2->getColor().r;
+	deltaGreen = ball1->getColor().g - ball2->getColor().g;
+	deltaBlue = ball1->getColor().b - ball2->getColor().b;
+	distance = pow(deltaRed, 2) + pow(deltaGreen, 2) + pow(deltaBlue, 2);
+	if (distance == 0) {
+		retour = true;
+	}
+	return retour;
+}
+
+void CollisionSystem::rebound()
+{
+	double posX, posY, angle;
+	posX = CollisionSystem::m_Ball->getPosX();
+	posY = CollisionSystem::m_Ball->getPosY();
+	angle = CollisionSystem::m_Ball->getAngle();
+	if (posX <= CANVAS_WIDTH_MIN) {
+		CollisionSystem::m_Ball->setReboundAngle(180 - angle);
+		CollisionSystem::m_Ball->setPosX(CANVAS_WIDTH_MIN);
+	}
+	if (posX >= CANVAS_WIDTH) {
+		CollisionSystem::m_Ball->setReboundAngle(180 - angle);
+		CollisionSystem::m_Ball->setPosX(CANVAS_WIDTH);
+	}
+	if (posY <= CANVAS_HEIGHT_MIN) {
+		CollisionSystem::m_Ball->setPosY(CANVAS_HEIGHT_MIN);
+	}
+}
+
+std::vector<Ball*>* CollisionSystem::findCluster()
+{
+	std::vector<Ball*>* ballsGridVector = CollisionSystem::m_ballsVector;
+	std::vector<Ball*> toProcess;
+	std::vector<Ball*>* processed = new std::vector<Ball*>();
+	// on commence par ajouter la balle au vector toProcess puisque c'est la premiere verification a faire
+	toProcess.push_back(CollisionSystem::m_Ball);
+	while (toProcess.size() != 0) {
+		// boucle sur l'ensemble des balles de la grid
+		// lorsqu'une balle est ajouter au vecteur toProcess, il est necessaire de l'enlever du gridVector pour garder le meme nombre de balles
+		// en jeu
+		for (size_t i = 0; i < ballsGridVector->size(); i++) {
+			// si la balle a l'index zero et la balle à l'index i du grid se touche && on la meme couleur
+			// on ajoute la balle a l'index i du grid dans le vecteur toProcess puisqu'il faudra ensuite verifier ses voisins
+			// ne pas oublier qu'une fois ajouter au vecteur toProcess, il est necessaire de supprimer l'index du gridVector pour
+			// eviter de processer 2x la meme balle
+			if (isTouching(toProcess[0], ballsGridVector->at(i)) && isColor(toProcess[0], ballsGridVector->at(i))) {
+				toProcess.push_back(ballsGridVector->at(i));
+				ballsGridVector->erase(ballsGridVector->begin() + i);
+			}
+		}
+		processed->push_back(toProcess[0]);
+		toProcess.erase(toProcess.begin());
+	}
+	return processed;
+}
+
+bool CollisionSystem::snapToRoof(Ball* ball)
+{
+	bool retour = false;
+	if (ball->getPosY() == CANVAS_HEIGHT_MIN + ball->getRadius()) {
+		retour = true;
+	}
+	return retour;
+}
+/*
+std::vector<Ball*> CollisionSystem::findFloatingCluster()
+{
+	std::vector<Ball*> ballsGridVector = CollisionSystem::m_ballsVector;
+	std::vector<Ball*> stick;
+	std::vector<Ball*> processedStick;
+	std::vector<Ball*> fall;
+
+	for (size_t i = 0; i < ballsGridVector.size(); i++) {
+		if (snapToRoof(ballsGridVector[i])) {
+			stick.push_back(ballsGridVector[i]);
+			ballsGridVector.erase(ballsGridVector.begin() + i);
+		}
+	}
+	while (stick.size() != 0) {
+		for (size_t i = 0; i < ballsGridVector.size(); i++) {
+			if (isTouching(stick[0], ballsGridVector[i])) {
+				stick.push_back(ballsGridVector[i]);
+				ballsGridVector.erase(ballsGridVector.begin() + i);
+			}
+		}
+		processedStick.push_back(stick[0]);
+		stick.erase(stick.begin());
+	}
+	fall = ballsGridVector;
+	return fall;
+}*/
+
+void CollisionSystem::remove(std::vector<Ball*> vectorRemove)
+{
+	for (size_t i = 0; i < vectorRemove.size(); i++) {
+		delete vectorRemove[i];
+	}
+	vectorRemove.clear();
+}
