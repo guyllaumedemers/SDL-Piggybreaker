@@ -9,6 +9,8 @@
       * Window
       * Mixer
       * Image
+    * Initialization
+    * Flow
   * Texture Loading 
   * Ball Management
   * Canon Management
