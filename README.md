@@ -2,7 +2,7 @@
 
 ## BubbleBreaker Game
 
-* Meachanic and Features
+* Mechanic and Features
 
   * Game Management
     * Setting up SDL
