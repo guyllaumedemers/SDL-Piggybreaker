@@ -1,0 +1,2 @@
+C:\Users\abrossea\source\repos\j02-a20-sept-tp\Math\Debug\lib_Point.pdb
+C:\Users\abrossea\source\repos\j02-a20-sept-tp\Math\Libraries\lib_Point\Debug\lib_Point.pdb
